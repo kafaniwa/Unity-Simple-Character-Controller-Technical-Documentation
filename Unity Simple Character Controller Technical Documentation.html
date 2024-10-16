@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Unity Character Controller Technical Documentation</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <nav id="navbar">
+        <header class="title">
+      <h1>Simple Unity Character Controller Technical Documentation</h1>
+      </header>
+      <ul>
+          <a class="nav-link" href="#Introduction" accesskey="i">INTRODUCTION</a>
+          <a class="nav-link" href="#Instancing_Your_Character" accesskey="c">INSTANCING YOUR CHARACTER</a>
+          <a class="nav-link" href="#Creating_Your_Character_Script" accesskey="s">CREATING YOUR CHARACTER SCRIPT</a>
+          <a class="nav-link" href="#Simple_Movement_And_Camera_Controls" accesskey="i">SIMPLE MOVEMENT AND CAMERA CONTROLS</a>
+          <a class="nav-link" href="#Adding_Animations" accesskey="i">ADDING ANIMATIONS</a>
+        </ul>
+      </nav>
+    <main id="main-doc">
+      <section class="main-section" id="Introduction">
+        <header><h3>Introduction</h3></header>
+        <p>When starting out with a unity project one of the first things you do after creating a scene is making an interactive environment. We are making a 3d game so in this case, a simple 3D platform would do. You can create this by:</p>
+        <li>Right clicking in the project hierarchy</li>
+        <li>Hovering over the 3d object option</li>
+        <li>And selecting plane</li>
+        <p>You have now created your first simple scene and are ready to import your character for testing</p>
+      </section>
+      <section class="main-section" id="Instancing_Your_Character">
+        <header><h3>Instancing Your Character</h3></header>
+        <p>Next thing we would want to do is instance a character. For simplicity sake, you can just create a new simple 3d object such as a sphere or cube similar to how we created the plane. If you happen to have a character you would like to import into unity, you can do the foolowing:</p>
+        <li>Go to the assets window</li>
+        <li> Right click and scroll down to Import New Asset</li>
+        <li>Select your character from its file location</li>
+        <p>You should now have a 3d object in your scene together with the plane you created. Feel free to reposition the object with the directional axes visible in the viewport.</p>
+      </section>
+      <section class="main-section" id="Creating_Your_Character_Script">
+        <header><h3>Creating Your Character Script</h3></header>
+        <p>Now we have the two main elements needed to convey the visual of movement, i.e. a. A character which would move when the movement keys are pressed and b. A plane for the character to move along.</p>
+        <p>Next, we are going to create the movement script for the character. There are 2 ways to do this. </p>
+        <li>In the asset manager window, right click and go up to the create option then click on the option c# script. Name the script and drag it onto your character to add it as a component</li>
+        <li>The other way is to go over to the component manager window of the character, click on add component and serch for c# script. Clcik on the c# script, name it, and you should see it added as a component to your character</li>
+        <p>
+          You should go ahead and also add a character controller component. This component is responsible for managing input and movement for your character.</p>
+          <p>The inital code in a new unity script looks as follows:
+        </p>
+        <code>using System.Collections;<br>
+using System.Collections.Generic;<br>
+using UnityEngine;<br>
+<p></p>
+public class NewBehaviourScript : MonoBehaviour
+<br>{<br>
+    // Start is called before the first frame update<br>
+    void Start()<br>
+    {<br>
+        
+    <br>}
+<p></p>
+    <br>// Update is called once per frame<br>
+    void Update()<br>
+    {<br>
+        
+    <br>}<br>
+}</code>
+<p>The Start class runs its code at the beginning of the program, as the comment says, before the first frame is called. This is good for anything that needs to be initialized or instanced before the scene is rendered. The Update class on the other hand runs its code every frame.</p>
+      </section>
+      <section class="main-section" id="Simple_Movement_And_Camera_Controls">
+        <header><h3>Simple Movement and Camera Controls</h3></header>
+        <p>Initial character movement is quite easy to implement in unity. All that is needed is to call on the axis controls in the given directions you would want the character to move. This happens in the update class as the code has to account for every frame the key is pressed. For example in the vertical direction, which would have the character move forward and backward, the line of code would be as follows:</p>
+        <code>
+          float vertical = Input.GetAxisRaw("Vertical");
+        </code>
+        <p>And in the horizontal direction, which is side to side, it would be:</p>
+        <code>
+          float horizontal = Input.GetAxisRaw("Horizontal");
+        </code>
+        <p>With these implemented, your character does not move, however. This is because your code is missing a valuable step that translates these inputs into directional magnitudes unity can understand. To do this the following extra bit of code is needed:</p>
+        <code>
+          Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+        </code>
+        <p>Your character should now be able to move freely along the plane, but now there's a new problem. Your camera does not follow the character and so movement is a little dissorienting. To fix this, we need to tie the camera to player movement</p>
+        <p>
+          To have the camera movement tied to the player movement, we need to do the following:
+        </p>
+        <li>
+          First, you need to have the following variables initialized at the start of the public class:<br>
+          <code>
+            public CharacterController controller;<br>
+    public Transform cam;<br>
+    public float turnSmoothTime = 0.1f;<br>
+    float turnSmoothVelocity;<br>
+    Vector3 moveDir = Vector3.zero;
+          </code>
+        </li><br>
+        <li>
+          Next, back in the update class, add the following code:<br>
+          <code>
+            if (direction.magnitude >= 0.1f)<br>
+        {<br>
+            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;<br>
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);<br>
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);<br>
+
+            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;<br>
+            controller.Move(moveDir.normalized * speed * Time.deltaTime);<br>
+        }<br>
+          </code>
+        </li>
+        <p>Now back in unity itself, you would want to add the correct elements to the variable slots that have appeared in the script component i.e. camera for "cam" slot, character controller for the "character controller" slot.</p>
+        <p><br>Your character should now be capable of movement with the camera following them and controllable with the mouse. This is the simplest way to easily implement movement in Unity. Next we can add some animations if you used a model that had a few animations included. This last part is a little advanced and can be ignored of you do not plan to add animations to your character at the moment.</p>
+      </section>
+      <section class="main-section" id="Adding_Animations">
+        <header><h3>Adding Animations</h3></header>
+        <p>To add animations to your character, you will first need to add an animator to the component manager for your character. Next you should open the animator window. If not already available in one of the display boxes, you can add it by:</p>
+        <li>Going up to the menu bar.</li>
+        <li>Clicking on the Window option.</li>
+        <li>Hovering over the animation option</li>
+        <li>And selecting animator.</li>
+        <p>You should now be able to see a screen similar to the one shown below.</p>
+        <img class="example" alt="Animator" src="https://docs.unity3d.com/uploads/Main/AnimatorWindowLayoutArea.png">
+        <p>The animator always starts from entry like the start class in scripts and works by linking an animation state to another so unity can transition between animations. For example, a character would normally go from idle to walking to running when moving. To set up this animation scheme, you first need to create a state and transitions between states. To do this:</p>
+        <li>Right click on an empty space next to the default new state and create an empty state. The default state could be our idle state</li>
+        <li>You can then right click on the default state and select transition. This creates a line you can drag and click on the other state to link them. Notice how there is an arrow that points from the default state to the new state.</li>
+        <li>You can then click on the line to set a condition for the transition.</li>
+        <li>In the condition list, hit add and set the condition to equals. for this initial change you can set the condition to 1.</li>
+        <li>Now from the new state, create a new transition to the default state and set its condition to 0. This lets the character go back to an idle animation once not moving.</li>
+        <p>Now back in your character script, add the following code to your update class</p>
+        <code>//animation<br>
+        if (direction.magnitude >= 0.1f && controller.isGrounded)<br>
+        {<br>
+            anim.SetInteger("Condition", 1);<br>
+        }<br>
+
+        else if (direction.magnitude == 0f)<br>
+        {<br>
+            anim.SetInteger("Condition", 0);<br>
+        }</code>
+        <p>Now to set up the actual animations, go to your character's model in the asset manager and select it. In the inspector, go to animation and set the idle and walk animations to loop so they loop as long as the character remains in either state. Next, go to rig, select the generic option from the animation type and hit apply. This generates an animation controller for your character which you can then select as the controller for the animator component applied to your scene character.</p>
+        <p>Next go back to your animator window and select the idle state. Here you can now add the character's idle animation in the motion node. Do the same with the walk animation for the walk state.</p>
+        <p>Hitting play now should display the fruits of your labor. You should see your character animating based on the movement occurring i.e. The character remains idle when not moving and walks when movement is detected.</p>
+        <p>You have now implemented a simple character movement system. This is a great starting point to learn about Unity's various components. You can even add more to the character and in so doing learn even more about Unity. For example, you can learn how to add particle effects to the character when it walks. Have fun learning the fundamentals of Unity!</p>
+      </section>
+    </main>
+  </body>
+</html>
